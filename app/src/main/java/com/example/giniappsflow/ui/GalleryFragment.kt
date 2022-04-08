@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -15,6 +16,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.giniappsflow.GalleryAdapter
 import com.example.giniappsflow.viewModel.MainViewModel
 import com.example.giniappsflow.R
+import com.example.giniappsflow.databinding.PortraitModeFragmentBinding
+import jp.wasabeef.blurry.Blurry
+import kotlinx.android.synthetic.main.grid_view_item.*
 import kotlinx.android.synthetic.main.portrait_mode_fragment.*
 
 class GalleryFragment : Fragment() {
@@ -22,12 +26,17 @@ class GalleryFragment : Fragment() {
     private val viewModel: MainViewModel by lazy {
         ViewModelProvider(this)[MainViewModel::class.java]
     }
+
+    lateinit var binding:PortraitModeFragmentBinding
+
     private val pictures by lazy {
         ArrayList<String>(viewModel.getGallerySize(this.requireContext()))
     }
+
     private val galleryAdapter by lazy {
-        GalleryAdapter { path ->
+        GalleryAdapter { view,path->
             viewModel.loadImage(path)
+            Blurry.with(context).capture(view).into(view as ImageView)
             Log.i("Path",path)
         }
     }
@@ -39,9 +48,10 @@ class GalleryFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         setHasOptionsMenu(true)
-        return inflater.inflate(R.layout.portrait_mode_fragment, container, false)
+        binding = PortraitModeFragmentBinding.inflate(layoutInflater,container,false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -79,7 +89,7 @@ class GalleryFragment : Fragment() {
         loadPictures(pageSize)
     }
     private fun loadPictures(pageSize: Int) {
-        viewModel.getImagesFromGallery(this.requireContext(), pageSize) {
+        viewModel.getImagesFromGallery(requireContext(), pageSize) {
             if (it.isNotEmpty()) {
                 pictures.addAll(it)
                 galleryAdapter.update(it)

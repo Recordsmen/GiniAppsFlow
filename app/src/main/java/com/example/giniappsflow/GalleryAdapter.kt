@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import java.io.File
 
-class GalleryAdapter(private val onClick: (String) -> Unit) :
+class GalleryAdapter(private val onClick: (View,String) -> Unit) :
     RecyclerView.Adapter<GalleryAdapter.MyViewHolder>() {
 
     private val list: ArrayList<String> = ArrayList()
@@ -32,8 +32,10 @@ class GalleryAdapter(private val onClick: (String) -> Unit) :
             .into(holder.image)
         holder.image.clipToOutline = true
         holder.image.setOnClickListener {
-            onClick(path)
+            onClick(it,path)
         }
+
+
     }
 
     fun update(newItems: List<String>) {

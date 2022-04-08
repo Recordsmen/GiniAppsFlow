@@ -45,7 +45,7 @@ class MainViewModel : ViewModel() {
         val galleryImageUrls = ArrayList<String>()
         val columns = arrayOf(
             MediaStore.Images.Media.DATA,
-            MediaStore.Images.Media._ID
+            MediaStore.Images.Media._ID,
         )
         val orderBy = MediaStore.Images.Media.DATE_ADDED
         val cursor = context.contentResolver.query(
