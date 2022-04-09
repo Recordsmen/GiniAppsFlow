@@ -1,48 +1,56 @@
 package com.example.giniappsflow.viewModel
 
+import android.app.Application
 import android.content.Context
+import android.database.Cursor
 import android.provider.MediaStore
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.giniappsflow.database.local.Image
+import com.example.giniappsflow.database.local.ImageDataBase
+import com.example.giniappsflow.repository.ImageRepository
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+
     private var startingRow = 0
-    private var rowsToLoad = 0
     private var allLoaded = false
-    private var imageForLoad:ArrayList<String> = arrayListOf()
+    lateinit var imageUriList: SharedFlow<String>
+    lateinit var loadingImages: Flow<String>
+    lateinit var images:Flow<Image>
+    val newGal: MutableSharedFlow<Image> = MutableSharedFlow(1000)
 
-    fun getImagesFromGallery(context: Context, pageSize: Int, list: (List<String>) -> Unit) {
+
+    private val database = ImageDataBase.getDatabase(application.applicationContext)
+    private val imageRepository = ImageRepository(database)
+
+    fun getImagesFromGallery(context: Context) {
         viewModelScope.launch {
-            val asyncList = async {
-                fetchGalleryImages(context, pageSize)
-            }
-            list(asyncList.await())
+            fetchGalleryImages(context)
+            gettingImages()
+            pushGalleryIntoDatabase()
+            getImagesFromRepository()
         }
     }
 
-    fun getGallerySize(context: Context): Int {
-        val columns =
-            arrayOf(
-                MediaStore.Images.Media.DATA,
-                MediaStore.Images.Media._ID
-            )
-        val orderBy = MediaStore.Images.Media.DATE_ADDED
-
-        val cursor = context.contentResolver
-            .query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, columns, null,
-            null, "$orderBy DESC"
-            )
-
-        val rows = cursor!!.count
-        cursor.close()
-        return rows
+    fun getImagesFromRepository(){
+        viewModelScope.launch {
+            images = imageRepository.getGallery()
+        }
+    }
+    private suspend fun gettingImages(){
+        imageUriList.collect{
+            newGal.tryEmit(Image(it))
+        }
+    }
+    private suspend fun pushGalleryIntoDatabase(){
+        imageRepository.pushAllGallery(newGal.asSharedFlow())
     }
 
-    private fun fetchGalleryImages(context: Context, rowsPerLoad: Int): List<String> {
-        val galleryImageUrls = ArrayList<String>()
+    private fun fetchGalleryImages(context: Context){
         val columns = arrayOf(
             MediaStore.Images.Media.DATA,
             MediaStore.Images.Media._ID,
@@ -56,41 +64,31 @@ class MainViewModel : ViewModel() {
 
         if (cursor != null && !allLoaded) {
             val totalRows = cursor.count
-
-            allLoaded = rowsToLoad == totalRows
-
-            if (rowsToLoad < rowsPerLoad) {
-                rowsToLoad = rowsPerLoad
-            }
-
-            for (i in startingRow until rowsToLoad) {
-                cursor.moveToPosition(i)
-                val dataColumnIndex =
-                    cursor.getColumnIndex(MediaStore.Images.Media.DATA) //get column index
-                galleryImageUrls.add(cursor.getString(dataColumnIndex)) //get Image from column index
-
-            }
-            Log.i("TotalGallerySize", "$totalRows")
-            Log.i("GalleryStart", "$startingRow")
-            Log.i("GalleryEnd", "$rowsToLoad")
-
-            startingRow = rowsToLoad
-            if (rowsPerLoad > totalRows || rowsToLoad >= totalRows)
-                rowsToLoad = totalRows
-            else {
-                if (totalRows - rowsToLoad <= rowsPerLoad)
-                    rowsToLoad = totalRows
-                else
-                    rowsToLoad += rowsPerLoad
-            }
+            val mutableimageUriList:MutableSharedFlow<String> = MutableSharedFlow(
+                replay = totalRows,
+                extraBufferCapacity = 10,
+                onBufferOverflow = BufferOverflow.SUSPEND
+            )
+            getImages(totalRows,cursor, mutableimageUriList)
             cursor.close()
-            Log.i("PartialGallerySize", " ${galleryImageUrls.size}")
-        }
 
-        return galleryImageUrls
+        }
+    }
+
+
+    private fun getImages(totalRows:Int, cursor:Cursor,mutableImageFlow: MutableSharedFlow<String>){
+        for (i in startingRow until totalRows){
+            cursor.moveToPosition(i)
+            val dataIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
+            mutableImageFlow.tryEmit(cursor.getString(dataIndex))
+        }
+        imageUriList = mutableImageFlow.asSharedFlow()
     }
     fun loadImage(path:String){
-        imageForLoad.add(path)
+        val listOfLoadImage = mutableListOf<String>()
+        listOfLoadImage.add(path)
+        loadingImages = listOfLoadImage.asFlow()
+
     }
 
 

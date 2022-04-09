@@ -10,16 +10,17 @@ import android.view.*
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.giniappsflow.GalleryAdapter
 import com.example.giniappsflow.viewModel.MainViewModel
 import com.example.giniappsflow.R
+import com.example.giniappsflow.database.local.Image
 import com.example.giniappsflow.databinding.PortraitModeFragmentBinding
 import jp.wasabeef.blurry.Blurry
-import kotlinx.android.synthetic.main.grid_view_item.*
-import kotlinx.android.synthetic.main.portrait_mode_fragment.*
+import kotlinx.coroutines.launch
+
+const val TAG = "GALLERY_FRAGMENT"
 
 class GalleryFragment : Fragment() {
 
@@ -28,10 +29,6 @@ class GalleryFragment : Fragment() {
     }
 
     lateinit var binding:PortraitModeFragmentBinding
-
-    private val pictures by lazy {
-        ArrayList<String>(viewModel.getGallerySize(this.requireContext()))
-    }
 
     private val galleryAdapter by lazy {
         GalleryAdapter { view,path->
@@ -72,37 +69,31 @@ class GalleryFragment : Fragment() {
     }
 
     private fun init(spancount:Int) {
-        val pageSize = 30
         val gridLayoutManager = GridLayoutManager(this.activity, spancount)
-        recyclerView.apply {
+        binding.recyclerView.apply {
             layoutManager = gridLayoutManager
             adapter = galleryAdapter
         }
-
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (gridLayoutManager.findLastVisibleItemPosition() == galleryAdapter.itemCount - 1) {
-                    loadPictures(pageSize)
-                }
-            }
-        })
-        loadPictures(pageSize)
+        loadPictures()
     }
-    private fun loadPictures(pageSize: Int) {
-        viewModel.getImagesFromGallery(requireContext(), pageSize) {
-            if (it.isNotEmpty()) {
-                pictures.addAll(it)
-                galleryAdapter.update(it)
+    private fun loadPictures() {
+        viewModel.getImagesFromGallery(requireContext())
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
+                viewModel.imageUriList.collect { data ->
+                    val listOfImages = mutableListOf<String>()
+                    listOfImages.add(data)
+                    galleryAdapter.update(listOfImages)
+                }
             }
         }
     }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-
-        // Checks the orientation of the screen
-        if (newConfig.orientation === Configuration.ORIENTATION_LANDSCAPE) {
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             init(LANDSCAPE_SPANCOUNT)
-        } else if (newConfig.orientation === Configuration.ORIENTATION_PORTRAIT) {
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             init(PORTRAIT_SPANCOUNT)
         }
     }

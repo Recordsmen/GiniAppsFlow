@@ -1,37 +1,37 @@
 package com.example.giniappsflow
 
-import kotlinx.android.synthetic.main.grid_view_item.view.*
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.giniappsflow.database.local.Image
+import com.example.giniappsflow.databinding.GridViewItemBinding
 import java.io.File
 
 class GalleryAdapter(private val onClick: (View,String) -> Unit) :
-    RecyclerView.Adapter<GalleryAdapter.MyViewHolder>() {
+    RecyclerView.Adapter<GalleryAdapter.ViewHolder>() {
 
     private val list: ArrayList<String> = ArrayList()
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        return MyViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.grid_view_item, parent, false)
-        )
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        return ViewHolder.from(parent)
     }
 
     override fun getItemCount(): Int {
         return list.size
     }
 
-    override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val path = list[position]
 
         Glide
             .with(holder.itemView)
             .load(path)
-            .into(holder.image)
-        holder.image.clipToOutline = true
-        holder.image.setOnClickListener {
+            .into(holder.binding.imageView)
+
+        holder.binding.imageView.setOnClickListener {
+            holder.binding.progressBar.visibility = View.VISIBLE
             onClick(it,path)
         }
 
@@ -46,7 +46,15 @@ class GalleryAdapter(private val onClick: (View,String) -> Unit) :
         notifyDataSetChanged()
     }
 
-    class MyViewHolder(item: View) : RecyclerView.ViewHolder(item) {
-        val image = item.imageView
+    class ViewHolder(val binding: GridViewItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        companion object {
+
+            fun from(parent: ViewGroup): ViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = GridViewItemBinding.inflate(layoutInflater, parent, false)
+
+                return ViewHolder(binding)
+            }
+        }
     }
 }
