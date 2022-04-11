@@ -2,15 +2,10 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/navigation"
-    app:startDestination="@id/galleryFragment">
+    android:id="@+id/nav"
+    app:startDestination="@id/activeScreen2">
     <fragment
-        android:id="@+id/galleryFragment"
-        android:name="com.example.giniappsflow.ui.GalleryFragment"
-        android:label="portrait_mode_fragment"
-        tools:layout="@layout/gallery_fragment" />
-    <fragment
-        android:id="@+id/activeScreen"
+        android:id="@+id/activeScreen2"
         android:name="com.example.giniappsflow.ui.LinksFragment"
         android:label="fragment_active_screen"
         tools:layout="@layout/links_fragment" />

@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="grid_item_layout_margin">10dp</dimen>
+    <dimen name="linear_item_margin">10dp</dimen>
+    <dimen name="left_item_margin">5dp</dimen>
+    <dimen name="textSizeLinearView">20sp</dimen>
+    <dimen name="left_view_item_margin">10dp</dimen>
 </resources>

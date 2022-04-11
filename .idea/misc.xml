@@ -7,11 +7,17 @@
         <entry key="app/src/main/res/drawable/ic_baseline_3d_rotation_24.xml" value="0.21" />
         <entry key="app/src/main/res/drawable/ic_baseline_link_24.xml" value="0.21" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.21" />
+        <entry key="app/src/main/res/layout/activity_links.xml" value="0.31567028985507245" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.31567028985507245" />
+        <entry key="app/src/main/res/layout/fragment_active_screen.xml" value="0.31567028985507245" />
+        <entry key="app/src/main/res/layout/gallery_fragment.xml" value="0.36141304347826086" />
         <entry key="app/src/main/res/layout/grid_view_item.xml" value="0.30047607421875" />
         <entry key="app/src/main/res/layout/landscape_mode_fragment.xml" value="0.31567028985507245" />
+        <entry key="app/src/main/res/layout/linear_view_item.xml" value="0.31567028985507245" />
+        <entry key="app/src/main/res/layout/links_fragment.xml" value="0.36141304347826086" />
         <entry key="app/src/main/res/layout/portrain_mode_fragment.xml" value="0.31567028985507245" />
         <entry key="app/src/main/res/layout/portrait_mode_fragment.xml" value="0.31567028985507245" />
+        <entry key="app/src/main/res/menu/home.xml" value="0.40989583333333335" />
         <entry key="app/src/main/res/menu/menu.xml" value="0.4244791666666667" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.21" />
       </map>
