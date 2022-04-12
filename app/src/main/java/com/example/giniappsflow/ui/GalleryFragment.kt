@@ -23,10 +23,6 @@ import com.example.giniappsflow.R
 import com.example.giniappsflow.databinding.GalleryFragmentBinding
 import com.example.giniappsflow.viewModel.MainViewModel
 import kotlinx.coroutines.launch
-import org.opencv.android.Utils
-import org.opencv.core.Size
-import org.opencv.imgcodecs.Imgcodecs.imread
-import org.opencv.imgproc.Imgproc
 
 class GalleryFragment : Fragment() {
 
