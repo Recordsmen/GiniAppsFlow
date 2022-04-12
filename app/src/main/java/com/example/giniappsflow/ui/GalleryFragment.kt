@@ -8,9 +8,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
-import android.widget.ImageView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -23,7 +22,6 @@ import com.example.giniappsflow.LinksActivity
 import com.example.giniappsflow.R
 import com.example.giniappsflow.databinding.GalleryFragmentBinding
 import com.example.giniappsflow.viewModel.MainViewModel
-import jp.wasabeef.blurry.Blurry
 import kotlinx.coroutines.launch
 import org.opencv.android.Utils
 import org.opencv.core.Size
@@ -41,13 +39,12 @@ class GalleryFragment : Fragment() {
 
     private val galleryAdapter by lazy {
         GalleryAdapter { view,path->
-            Blurry.with(context).capture(view).into(view as ImageView)
             val image = BitmapFactory.decodeFile(path)
 //            val blurred = blur(path,image)
             viewModel.uploadImageToImgur(image,path)
-            Log.i("Path",path)
         }
     }
+
     companion object{
         const val LANDSCAPE_SPANCOUNT = 5
         const val PORTRAIT_SPANCOUNT = 3
@@ -87,6 +84,7 @@ class GalleryFragment : Fragment() {
             adapter = galleryAdapter
         }
         loadPictures()
+        getErrors()
     }
 
     private fun loadPictures() {
@@ -95,6 +93,16 @@ class GalleryFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
                 viewModel.images.collect {
                     galleryAdapter.update(it)
+                }
+            }
+        }
+    }
+
+    private fun getErrors() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
+                viewModel.error.collect {
+                    Toast.makeText(context,it,Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -125,11 +133,11 @@ class GalleryFragment : Fragment() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 fun blur(path: String,bitmap:Bitmap):Bitmap{
         val tmp = imread(path)
         Utils.bitmapToMat(bitmap, tmp)
-        Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_RGB2HSV_FULL)
-        Imgproc.GaussianBlur(tmp, tmp, Size(3.0, 3.0), 0.0, 0.0)
+        Imgproc.GaussianBlur(tmp, tmp, Size(3.0, 3.0), 0.0)
         Utils.matToBitmap(tmp, bitmap)
         return bitmap
     }

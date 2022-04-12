@@ -19,6 +19,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.ByteArrayOutputStream
 import java.io.OutputStreamWriter
+import java.lang.Exception
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
@@ -34,6 +35,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _links = MutableSharedFlow<List<Image>>()
     val links:SharedFlow<List<Image>> = _links
+
+    private val _error = MutableSharedFlow<String>()
+    val error:SharedFlow<String> = _error
 
     private val database = ImageDataBase.getDatabase(application.applicationContext)
     private val imageRepository = ImageRepository(database)
@@ -94,73 +98,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun uploadImageToImgur(image: Bitmap,path: String) {
-        viewModelScope.launch(Dispatchers.IO) {
             getBase64Image(image, complete = { base64Image ->
                 viewModelScope.launch(Dispatchers.IO) {
                     val url = URL("https://api.imgur.com/3/image")
 
                     val boundary = "Boundary-${System.currentTimeMillis()}"
+                    try {
+                        val httpsURLConnection = url.openConnection() as HttpsURLConnection
+                        httpsURLConnection.setRequestProperty("Authorization", Api.KEY)
+                        httpsURLConnection.setRequestProperty(
+                            "Content-Type",
+                            "multipart/form-data; boundary=$boundary"
+                        )
+                        httpsURLConnection.requestMethod = "POST"
+                        httpsURLConnection.doInput = true
+                        httpsURLConnection.doOutput = true
 
-                    val httpsURLConnection =
-                        withContext(Dispatchers.IO) { url.openConnection() as HttpsURLConnection }
+                        var body = ""
+                        body += "--$boundary\r\n"
+                        body += "Content-Disposition:form-data; name=\"image\""
+                        body += "\r\n\r\n$base64Image\r\n"
+                        body += "--$boundary--\r\n"
 
-                    httpsURLConnection.setRequestProperty(
-                        "Authorization",
-                        Api.KEY
-                    )
-                    httpsURLConnection.setRequestProperty(
-                        "Content-Type",
-                        "multipart/form-data; boundary=$boundary"
-                    )
-                    httpsURLConnection.requestMethod = "POST"
-                    httpsURLConnection.doInput = true
-                    httpsURLConnection.doOutput = true
-
-                    var body = ""
-                    body += "--$boundary\r\n"
-                    body += "Content-Disposition:form-data; name=\"image\""
-                    body += "\r\n\r\n$base64Image\r\n"
-                    body += "--$boundary--\r\n"
-
-
-                    val outputStreamWriter = OutputStreamWriter(httpsURLConnection.outputStream)
-                    withContext(Dispatchers.IO) {
+                        val outputStreamWriter = OutputStreamWriter(httpsURLConnection.outputStream)
                         outputStreamWriter.write(body)
                         outputStreamWriter.flush()
+                        val response = httpsURLConnection.inputStream.bufferedReader()
+                            .use { it.readText() }
+
+                        val jsonObject = JSONTokener(response).nextValue() as JSONObject
+                        val data = jsonObject.getJSONObject("data")
+                        val success = jsonObject.getBoolean("success")
+
+                        Log.d("TAG", "Link is : ${data.getString("link")}")
+                        val imgurUrl = data.getString("link")
+                        list.add(imgurUrl)
+                        changeLink(path, imgurUrl, success)
+                    } catch (e: Exception) {
+                        _error.emit(e.toString())
+                        errorLink(path, false)
                     }
-                    val response = httpsURLConnection.inputStream.bufferedReader()
-                        .use { it.readText() }
-
-                    val jsonObject = JSONTokener(response).nextValue() as JSONObject
-                    val data = jsonObject.getJSONObject("data")
-                    val success = jsonObject.getBoolean("success")
-
-                    Log.d("TAG", "Link is : ${data.getString("link")}")
-
-                    Log.i(TAG, jsonObject.toString())
-                    Log.i(TAG, success.toString())
-
-                    val imgurUrl = data.getString("link")
-                    list.add(imgurUrl)
-                    changeSuccess(path, imgurUrl,success)
                 }
             })
-        }
     }
-
     private fun getBase64Image(image: Bitmap, complete: (String) -> Unit) {
             val outputStream = ByteArrayOutputStream()
             image.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
             val b = outputStream.toByteArray()
             complete(Base64.encodeToString(b, Base64.DEFAULT))
     }
-
-    fun changeSuccess(uri: String, link:String,success:Boolean){
+    fun changeLink(uri: String, link:String, success:Boolean){
         viewModelScope.launch {
             imageRepository.changeLink(uri,link,success)
         }
     }
-
+    fun errorLink(uri: String,success: Boolean){
+        viewModelScope.launch {
+            imageRepository.changeError(uri,success)
+        }
+    }
     fun getAllLinks(){
         viewModelScope.launch {
             imageRepository.getLinks().collect{

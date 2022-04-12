@@ -28,7 +28,6 @@ class SendedAdapter(private val onClick: (View, String) -> Unit) :
         holder.binding.tvLink.text = path.link
 
         onClick(holder.itemView,path.link)
-
     }
 
     @SuppressLint("NotifyDataSetChanged")

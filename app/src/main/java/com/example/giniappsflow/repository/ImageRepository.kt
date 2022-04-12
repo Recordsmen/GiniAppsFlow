@@ -23,23 +23,9 @@ class ImageRepository (private val database: ImageDataBase) {
         return result
     }
 
-    suspend fun changeStatus(image: String){
+    suspend fun changeError(uri: String,success: Boolean){
         withContext(Dispatchers.IO){
-            database.galleryDataBaseDao.insert(image)
-        }
-    }
-
-    suspend fun getSendedImages(): Flow<List<Image>>{
-        lateinit var result: Flow<List<Image>>
-        withContext(Dispatchers.IO){
-            result = database.galleryDataBaseDao.getAllSentImages()
-        }
-        return result
-    }
-
-    suspend fun changeSuccess(uri: String){
-        withContext(Dispatchers.IO){
-            database.galleryDataBaseDao.updateSuccess(true,uri)
+            database.galleryDataBaseDao.updateSuccess(success,uri)
         }
     }
 
