@@ -28,9 +28,6 @@ import org.opencv.core.Size
 import org.opencv.imgcodecs.Imgcodecs.imread
 import org.opencv.imgproc.Imgproc
 
-
-const val TAG = "GALLERY_FRAGMENT"
-
 class GalleryFragment : Fragment() {
 
     private val viewModel: MainViewModel by activityViewModels()
@@ -40,7 +37,6 @@ class GalleryFragment : Fragment() {
     private val galleryAdapter by lazy {
         GalleryAdapter { view,path->
             val image = BitmapFactory.decodeFile(path)
-//            val blurred = blur(path,image)
             viewModel.uploadImageToImgur(image,path)
         }
     }
@@ -134,11 +130,12 @@ class GalleryFragment : Fragment() {
         }
     }
 
-fun blur(path: String,bitmap:Bitmap):Bitmap{
-        val tmp = imread(path)
-        Utils.bitmapToMat(bitmap, tmp)
-        Imgproc.GaussianBlur(tmp, tmp, Size(3.0, 3.0), 0.0)
-        Utils.matToBitmap(tmp, bitmap)
-        return bitmap
-    }
+    //Deprecated
+//fun blur(path: String,bitmap:Bitmap):Bitmap{
+//        val tmp = imread(path)
+//        Utils.bitmapToMat(bitmap, tmp)
+//        Imgproc.GaussianBlur(tmp, tmp, Size(3.0, 3.0), 0.0)
+//        Utils.matToBitmap(tmp, bitmap)
+//        return bitmap
+//    }
 }

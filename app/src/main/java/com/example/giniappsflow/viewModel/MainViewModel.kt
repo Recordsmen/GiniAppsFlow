@@ -23,7 +23,6 @@ import java.lang.Exception
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
-const val TAG = "MAIN_VIEW_MODEL"
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     var imageUriList: MutableList<String> = mutableListOf()
@@ -79,8 +78,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI, columns, null,
             null, "$orderBy DESC"
         )
-        Log.i("GalleryAllLoaded", "False")
-
         if (cursor != null) {
             val totalRows = cursor.count
 
@@ -129,8 +126,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         val jsonObject = JSONTokener(response).nextValue() as JSONObject
                         val data = jsonObject.getJSONObject("data")
                         val success = jsonObject.getBoolean("success")
-
-                        Log.d("TAG", "Link is : ${data.getString("link")}")
                         val imgurUrl = data.getString("link")
                         list.add(imgurUrl)
                         changeLink(path, imgurUrl, success)
