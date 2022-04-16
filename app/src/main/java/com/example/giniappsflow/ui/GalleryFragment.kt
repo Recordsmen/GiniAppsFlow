@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -65,8 +66,13 @@ class GalleryFragment : Fragment() {
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(readStorage), 2)
-        } else
-            init(PORTRAIT_SPANCOUNT)
+        } else {
+            val startConfiguration = when (resources.configuration.orientation){
+                Configuration.ORIENTATION_PORTRAIT -> PORTRAIT_SPANCOUNT
+                else   -> LANDSCAPE_SPANCOUNT
+            }
+                init(startConfiguration)
+        }
     }
 
     private fun init(spancount:Int) {
