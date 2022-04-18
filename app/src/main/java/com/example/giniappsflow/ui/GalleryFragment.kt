@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -30,6 +31,7 @@ class GalleryFragment : Fragment() {
     private val viewModel: MainViewModel by activityViewModels()
 
     lateinit var binding:GalleryFragmentBinding
+    var startConfiguration = 3
 
     private val galleryAdapter by lazy {
         GalleryAdapter { view,path->
@@ -37,6 +39,8 @@ class GalleryFragment : Fragment() {
             viewModel.uploadImageToImgur(image,path)
         }
     }
+
+
 
     companion object{
         const val LANDSCAPE_SPANCOUNT = 5
@@ -50,7 +54,53 @@ class GalleryFragment : Fragment() {
         setHasOptionsMenu(true)
         binding = GalleryFragmentBinding.inflate(layoutInflater,container,false)
 
+        startConfiguration = when (resources.configuration.orientation){
+            Configuration.ORIENTATION_PORTRAIT -> PORTRAIT_SPANCOUNT
+            else   -> LANDSCAPE_SPANCOUNT
+        }
         return binding.root
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED -> {
+
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) -> {
+        }
+            else -> {
+                requestPermissions(
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    2)
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            2 -> {
+                if ((grantResults.isNotEmpty() &&
+                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    init(startConfiguration)
+                } else {
+                }
+                return
+            }
+            else -> {
+                requestPermissions(
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    2)
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -67,11 +117,7 @@ class GalleryFragment : Fragment() {
         ) {
             requestPermissions(arrayOf(readStorage), 2)
         } else {
-            val startConfiguration = when (resources.configuration.orientation){
-                Configuration.ORIENTATION_PORTRAIT -> PORTRAIT_SPANCOUNT
-                else   -> LANDSCAPE_SPANCOUNT
-            }
-                init(startConfiguration)
+            init(startConfiguration)
         }
     }
 
@@ -141,3 +187,4 @@ class GalleryFragment : Fragment() {
 //        return bitmap
 //    }
 }
+
